@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Der Entzündungs-Test · die Naturapothekerin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EFE3;        /* Pergament */
+    --paper-deep:#EBE5D3;
+    --ink:#22382B;          /* Tannengrün, fast schwarz */
+    --moss:#5A7357;         /* Moosgrün, Akzent */
+    --moss-soft:#8FA486;
+    --bark:#7A5C43;         /* Rinde/Braun für Etiketten & Siegel */
+    --slate:#4A6670;        /* gedecktes Blau */
+    --line:#C9C0A8;
+    --white:#FBF9F2;
+    --danger:#8C4A3C;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(34,56,43,.10);
+    --font-display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --font-body:"Karla", -apple-system, "Segoe UI", sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font-body);
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse at 15% -5%, rgba(90,115,87,.08), transparent 55%),
+      radial-gradient(ellipse at 95% 105%, rgba(122,92,67,.07), transparent 50%);
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:28px 20px 80px}
+  .screen{display:none;animation:fadeUp .45s ease both}
+  .screen.active{display:block}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .screen{animation:none}
+    *{transition:none!important}
+  }
+
+  /* Kopf */
+  .brand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:30px}
+  .brand .leaf{width:34px;height:34px;flex:none}
+  .brand span{font-family:var(--font-display);font-size:1.15rem;letter-spacing:.14em;text-transform:uppercase;color:var(--moss)}
+
+  h1{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,6vw,2.9rem);line-height:1.12;text-align:center}
+  h1 em{font-style:italic;color:var(--moss)}
+  .kicker{
+    text-align:center;font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--bark);margin-bottom:14px;font-weight:700
+  }
+  .lede{text-align:center;font-size:1.06rem;max-width:34em;margin:18px auto 0;color:#3A4A3F}
+  .lede strong{color:var(--ink)}
+
+  .pain{
+    margin:30px auto 0;max-width:32em;background:var(--white);
+    border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow)
+  }
+  .pain p{font-family:var(--font-display);font-size:1.22rem;font-style:italic;line-height:1.5;text-align:center;color:var(--ink)}
+  .pain .who{font-family:var(--font-body);font-style:normal;font-size:.82rem;text-align:center;margin-top:10px;color:var(--moss);letter-spacing:.06em}
+
+  .benefits{margin:28px auto 0;max-width:34em;display:grid;gap:12px}
+  .benefit{display:flex;gap:12px;align-items:flex-start}
+  .benefit svg{flex:none;margin-top:3px}
+  .benefit b{font-weight:700}
+
+  .cta{
+    display:block;margin:32px auto 0;border:none;cursor:pointer;
+    background:var(--ink);color:var(--paper);font-family:var(--font-body);font-weight:700;
+    font-size:1.05rem;padding:17px 38px;border-radius:999px;letter-spacing:.02em;
+    box-shadow:0 12px 26px rgba(34,56,43,.28);transition:transform .15s ease, box-shadow .15s ease
+  }
+  .cta:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(34,56,43,.32)}
+  .cta:focus-visible{outline:3px solid var(--moss);outline-offset:3px}
+  .cta.secondary{background:transparent;color:var(--ink);border:1.5px solid var(--ink);box-shadow:none}
+  .meta{ text-align:center;font-size:.82rem;color:#6B7566;margin-top:14px}
+  .trust{
+    margin:34px auto 0;max-width:34em;display:flex;gap:14px;align-items:center;justify-content:center;
+    font-size:.85rem;color:#54604F;border-top:1px solid var(--line);padding-top:20px;flex-wrap:wrap;text-align:center
+  }
+
+  /* Fortschritt */
+  .progress{position:sticky;top:0;z-index:5;background:linear-gradient(var(--paper) 75%, transparent);padding:10px 0 16px}
+  .progress .bar{height:6px;background:var(--paper-deep);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+  .progress .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--moss),var(--moss-soft));transition:width .3s ease}
+  .progress .label{display:flex;justify-content:space-between;font-size:.75rem;color:#6B7566;margin-top:6px;letter-spacing:.05em}
+
+  /* Kapitelkarte (Herbarium-Etikett) */
+  .chapter{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    padding:38px 30px;text-align:center;box-shadow:var(--shadow);position:relative;margin-top:10px
+  }
+  .chapter::before, .chapter::after{
+    content:"";position:absolute;inset:8px;border:1px dashed var(--line);border-radius:9px;pointer-events:none
+  }
+  .chapter .roman{font-family:var(--font-display);font-size:.95rem;letter-spacing:.35em;color:var(--bark);text-transform:uppercase}
+  .chapter h2{font-family:var(--font-display);font-weight:600;font-size:1.9rem;margin:10px 0 6px}
+  .chapter p{font-size:.95rem;color:#4A574C;max-width:26em;margin:0 auto}
+  .chapter .plantmark{margin:14px auto 4px;width:44px;height:44px}
+
+  /* Frage */
+  .qcard{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px;box-shadow:var(--shadow);margin-top:10px}
+  .qarea{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bark);font-weight:700;text-align:center}
+  .qtext{font-family:var(--font-display);font-size:clamp(1.25rem,4vw,1.55rem);font-weight:600;line-height:1.35;text-align:center;margin:14px 0 24px;min-height:3.6em;display:flex;align-items:center;justify-content:center}
+  .answers{display:grid;gap:10px}
+  .ans{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    width:100%;border:1.5px solid var(--line);background:var(--paper);
+    border-radius:12px;padding:13px 18px;cursor:pointer;font-family:var(--font-body);
+    font-size:1rem;color:var(--ink);transition:border-color .12s, background .12s, transform .12s;text-align:left
+  }
+  .ans .num{
+    flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);
+    display:grid;place-items:center;font-size:.8rem;color:#6B7566;background:var(--white)
+  }
+  .ans:hover{border-color:var(--moss);background:#EFF1E4;transform:translateY(-1px)}
+  .ans:focus-visible{outline:3px solid var(--moss);outline-offset:2px}
+  .ans.selected{border-color:var(--moss);background:#E7ECDC}
+  .ans.selected .num{background:var(--moss);color:var(--white);border-color:var(--moss)}
+  .backrow{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+  .linkbtn{background:none;border:none;color:#6B7566;font-size:.85rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:var(--font-body)}
+  .linkbtn:hover{color:var(--ink)}
+
+  /* Auswertung / Opt-in */
+  .lockedwrap{position:relative;margin-top:8px}
+  .locked{filter:blur(7px) saturate(.8);pointer-events:none;user-select:none;transition:filter .8s ease}
+  .locked.revealed{filter:none;pointer-events:auto;user-select:auto}
+  .lockbadge{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:2
+  }
+  .lockbadge .seal{
+    width:74px;height:74px;border-radius:50%;background:var(--bark);color:var(--paper);
+    display:grid;place-items:center;box-shadow:0 10px 24px rgba(122,92,67,.4);
+    font-family:var(--font-display);font-size:.68rem;letter-spacing:.12em;text-align:center;line-height:1.25;
+    border:2px solid var(--paper);outline:2px solid var(--bark);
+  }
+  .lockbadge p{background:var(--white);border:1px solid var(--line);border-radius:99px;padding:6px 16px;font-size:.85rem;box-shadow:var(--shadow)}
+
+  .optin{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:30px 26px;margin-top:22px
+  }
+  .optin h3{font-family:var(--font-display);font-size:1.65rem;font-weight:600;text-align:center;line-height:1.25}
+  .optin .sub{text-align:center;font-size:.95rem;color:#4A574C;margin:10px auto 20px;max-width:30em}
+  .optin ul{list-style:none;margin:0 0 20px;display:grid;gap:9px;max-width:30em;margin-inline:auto}
+  .optin li{display:flex;gap:10px;font-size:.95rem}
+  .optin li svg{flex:none;margin-top:4px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:.82rem;font-weight:700;letter-spacing:.04em;margin-bottom:5px;color:#3A4A3F}
+  .field input[type=text],.field input[type=email]{
+    width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);
+    font-family:var(--font-body);font-size:1rem;color:var(--ink)
+  }
+  .field input:focus{outline:2px solid var(--moss);border-color:var(--moss)}
+  .consent{display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:#54604F;margin:14px 0 6px}
+  .consent input{margin-top:3px;accent-color:var(--moss);width:17px;height:17px;flex:none}
+  .consent a{color:var(--slate)}
+  .err{color:var(--danger);font-size:.83rem;margin-top:8px;display:none;text-align:center}
+  .err.show{display:block}
+
+  /* Ergebnis */
+  .result-head{text-align:center;margin-top:6px}
+  .result-head .roman{font-family:var(--font-display);letter-spacing:.3em;text-transform:uppercase;color:var(--bark);font-size:.85rem}
+  .result-head h2{font-family:var(--font-display);font-size:clamp(1.8rem,5.5vw,2.5rem);font-weight:600;line-height:1.15;margin-top:8px}
+  .result-head h2 em{color:var(--moss);font-style:italic}
+  .chartcard{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 18px;margin-top:22px}
+  .chartcard .cap{text-align:center;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bark);font-weight:700;margin-bottom:6px}
+  .legend{display:grid;gap:8px;margin-top:18px}
+  .legend .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .legend .name{font-size:.92rem}
+  .legend .name b{font-weight:700}
+  .legend .trackwrap{grid-column:1/-1;height:8px;background:var(--paper-deep);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+  .legend .track{height:100%;background:var(--moss-soft);border-radius:99px;width:0%;transition:width .9s ease}
+  .legend .row.top .track{background:var(--bark)}
+  .legend .pts{font-size:.8rem;color:#6B7566;white-space:nowrap}
+  .badge-top{display:inline-block;background:var(--bark);color:var(--paper);font-size:.68rem;letter-spacing:.1em;border-radius:99px;padding:2px 9px;margin-left:7px;vertical-align:2px;text-transform:uppercase;font-weight:700}
+
+  .interp,.teaser,.bookbox,.mailnote{border-radius:var(--radius);padding:26px 24px;margin-top:20px}
+  .interp{background:var(--white);border:1px solid var(--line);box-shadow:var(--shadow)}
+  .interp h3,.teaser h3{font-family:var(--font-display);font-size:1.5rem;font-weight:600;margin-bottom:10px}
+  .interp p+p{margin-top:10px}
+  .teaser{background:#E9EDDE;border:1px solid #C7D0B4}
+  .teaser .plantname{font-family:var(--font-display);font-style:italic;color:var(--moss);font-size:1.15rem}
+  .teaser .quote{font-family:var(--font-display);font-style:italic;border-left:3px solid var(--moss-soft);padding-left:14px;margin:12px 0;color:#3A4A3F}
+  .teaser .more{margin-top:14px;font-size:.9rem;color:#54604F}
+  .bookbox{background:var(--ink);color:var(--paper);box-shadow:0 16px 36px rgba(34,56,43,.3)}
+  .bookbox .roman{letter-spacing:.28em;text-transform:uppercase;font-size:.72rem;color:var(--moss-soft);font-weight:700}
+  .bookbox h3{font-family:var(--font-display);font-size:1.7rem;font-weight:600;line-height:1.25;margin:8px 0 10px}
+  .bookbox p{color:#D9DCC9;font-size:.97rem}
+  .bookbox p+p{margin-top:10px}
+  .bookbox .cta{background:var(--paper);color:var(--ink);margin-top:20px;box-shadow:none}
+  .mailnote{background:var(--paper-deep);border:1px dashed var(--bark);font-size:.92rem;text-align:center}
+  .disclaimer{font-size:.78rem;color:#75806F;margin-top:26px;text-align:center;max-width:36em;margin-inline:auto}
+  footer{margin-top:44px;text-align:center;font-size:.78rem;color:#8A927F}
+  footer a{color:#75806F}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <svg class="leaf" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 36C20 22 26 10 36 4 34 20 28 32 20 36Z" fill="#5A7357"/><path d="M20 36C20 24 14 12 4 6 6 22 12 32 20 36Z" fill="#8FA486"/></svg>
+    <span>die Naturapothekerin</span>
+  </div>
+
+  <!-- ══════════ SCREEN 1: START ══════════ -->
+  <section class="screen active" id="s-intro" aria-label="Start">
+    <p class="kicker">Der Original-Test aus dem Buch · zum ersten Mal online</p>
+    <h1>Erschöpft, verspannt, „alles unauffällig"?<br><em>Dein Körper redet mit dir — leise.</em></h1>
+    <p class="lede">Dieser Test zeigt dir in wenigen Minuten, in welchem deiner <strong>6 Körperbereiche</strong> sich Zeichen stiller Entzündungen am stärksten häufen — damit du endlich weißt, <strong>wo</strong> du ansetzen darfst.</p>
+
+    <div class="pain">
+      <p>„Ich fühle mich nicht mehr richtig — und ich will endlich verstehen, warum."</p>
+      <p class="who">Wenn dieser Satz deiner sein könnte, ist dieser Test für dich gemacht.</p>
+    </div>
+
+    <div class="benefits">
+      <div class="benefit"><svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span><b>60 kurze Fragen, ca. 4 Minuten</b> — der vollständige Selbsttest aus meinem Buch, nicht die Kurzversion.</span></div>
+      <div class="benefit"><svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span><b>Dein persönlicher Entzündungs-Kompass</b> — eine Auswertung über alle 6 Bereiche, mit deinem individuellen Schwerpunkt.</span></div>
+      <div class="benefit"><svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span><b>Deine pflanzliche Soforthilfe</b> — die passende Quick-Fix-Empfehlung für deinen Schwerpunkt, direkt in dein Postfach.</span></div>
+    </div>
+
+    <button class="cta" id="btn-start">Test jetzt starten →</button>
+    <p class="meta">Kostenlos · anonym ausfüllbar · keine Diagnose, sondern eine Einladung, deinem Körper zuzuhören</p>
+
+    <div class="trust">
+      <span><b>Dr. Nelli Klameth</b> — promovierte Apothekerin &amp; Naturheilkundlerin. Aus ihrem Buch <i>„Die Naturapothekerin für stille Entzündungen"</i> (Goldegg Verlag).</span>
+    </div>
+  </section>
+
+  <!-- ══════════ SCREEN 2: TEST ══════════ -->
+  <section class="screen" id="s-quiz" aria-label="Test">
+    <div class="progress">
+      <div class="bar"><div class="fill" id="p-fill"></div></div>
+      <div class="label"><span id="p-area"></span><span id="p-count"></span></div>
+    </div>
+    <div id="chapter-holder"></div>
+    <div id="question-holder"></div>
+  </section>
+
+  <!-- ══════════ SCREEN 3: OPT-IN ══════════ -->
+  <section class="screen" id="s-gate" aria-label="Auswertung freischalten">
+    <p class="kicker">Deine Auswertung ist fertig</p>
+    <h1 style="font-size:clamp(1.7rem,5vw,2.3rem)">Dein Entzündungs-Kompass<br><em>ist bereit für dich.</em></h1>
+
+    <div class="lockedwrap" aria-hidden="true">
+      <div class="locked" id="locked-preview"></div>
+      <div class="lockbadge">
+        <div class="seal">DEIN<br>ERGEBNIS</div>
+        <p>🌿 Trag dich ein, um deinen Kompass aufzudecken</p>
+      </div>
+    </div>
+
+    <div class="optin">
+      <h3>Wohin dürfen wir deinen Kompass schicken?</h3>
+      <p class="sub">Du bekommst deine Auswertung sofort hier angezeigt — und zusätzlich per E-Mail:</p>
+      <ul>
+        <li><svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span>deinen vollständigen <b>Entzündungs-Kompass</b> zum Abspeichern,</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span>die <b>pflanzliche Quick-Fix-Soforthilfe</b> für deinen persönlichen Schwerpunkt,</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#5A7357"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FBF9F2" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span>und meine wöchentliche Post mit fundiertem Heilpflanzenwissen &amp; Rezepturen.</span></li>
+      </ul>
+      <div class="field">
+        <label for="f-name">Dein Vorname (optional)</label>
+        <input type="text" id="f-name" autocomplete="given-name" placeholder="z. B. Sabine">
+      </div>
+      <div class="field">
+        <label for="f-email">Deine E-Mail-Adresse *</label>
+        <input type="email" id="f-email" autocomplete="email" placeholder="name@beispiel.de" required>
+      </div>
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span>Ja, ich möchte meine Test-Auswertung und den Newsletter „Die Naturapothekerin" per E-Mail erhalten. Der Versand erfolgt gemäß <a href="#" id="privacy-link" target="_blank" rel="noopener">Datenschutzerklärung</a>; eine Abmeldung ist jederzeit über den Link in jeder E-Mail möglich. Zur Sicherheit bestätigst du deine Anmeldung noch einmal per Klick (Double-Opt-in).</span>
+      </label>
+      <p class="err" id="f-err"></p>
+      <button class="cta" id="btn-reveal" style="width:100%">Kompass aufdecken &amp; per Mail erhalten 🌿</button>
+      <p class="meta">Kein Spam. Nur Post, die dir wirklich weiterhilft — versprochen.</p>
+    </div>
+  </section>
+
+  <!-- ══════════ SCREEN 4: ERGEBNIS ══════════ -->
+  <section class="screen" id="s-result" aria-label="Ergebnis"></section>
+
+  <footer>
+    © die Naturapothekerin · Dr. Nelli Klameth · <a href="#" id="privacy-link-2">Datenschutz</a> · <a href="#" id="imprint-link">Impressum</a>
+  </footer>
+</div>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   KONFIGURATION — bitte vor Live-Schaltung anpassen
+   ═══════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // Webhook deines E-Mail-Tools (z. B. Make/Zapier-Webhook, Brevo, ActiveCampaign, MailerLite Automation).
+  // Der Test sendet dorthin: E-Mail, Vorname, Einwilligung, alle Bereichs-Punkte + Schwerpunkt.
+  // Dein Tool verschickt dann Double-Opt-in + die passende Quick-Fix-Mail (Feld "topAreaId" fürs Routing nutzen).
+  WEBHOOK_URL: "",                       // leer = Demo-Modus (kein Versand, Ergebnis wird trotzdem angezeigt)
+  PRIVACY_URL: "https://www.naturgesund-nelliklameth.de/datenschutz",
+  IMPRINT_URL: "https://www.naturgesund-nelliklameth.de/impressum",
+  BOOK_URL:    "https://www.goldegg-verlag.com/titel/die-naturapothekerin-fuer-stille-entzuendungen/"
+};
+
+/* ─── Testinhalte: Original aus dem Buch ─── */
+const SCALE = [
+  {v:0,l:"niemals"},{v:1,l:"selten"},{v:2,l:"manchmal"},{v:3,l:"oft"},{v:4,l:"immer"}
+];
+
+const AREAS = [
+ {
+  id:"bewegung", roman:"I", name:"Bewegungsapparat", sub:"Gelenke & Muskeln",
+  intro:"Dein Körper trägt dich durch jeden Tag. Hören wir hin, was Gelenke und Muskeln dir erzählen.",
+  questions:[
+   "Wachst du morgens mit steifen Gelenken oder Muskelschmerzen auf?",
+   "Hast du Gelenkschmerzen, auch ohne erkennbare Ursache?",
+   "Knacken, reiben oder blockieren deine Gelenke regelmäßig?",
+   "Hast du wiederkehrende Rückenschmerzen ohne konkrete Ursache?",
+   "Fühlen sich deine Muskeln häufig verspannt oder kraftlos an?",
+   "Bist du verspannt oder druckempfindlich an Schultern, Rücken oder Beinen?",
+   "Wirst du schnell müde bei körperlicher Aktivität?",
+   "Hast du häufig Sehnen- oder Bänderverletzungen?",
+   "Fühlst du dich unbeholfen oder tollpatschig – stolperst oder verletzt dich häufiger?",
+   "Leidest du unter unerklärlichem Muskelkater oder Druckempfindlichkeit?"
+  ],
+  validation:"Steife Morgen, Verspannungen und Schmerzen ohne klaren Auslöser sind kein „normales Älterwerden“ – sie sind eine Botschaft. In diesem Bereich zeigt dein Körper Entzündungszeichen dort, wo du ihn am unmittelbarsten spürst: beim Bewegen, Tragen, Aufstehen.",
+  plant:{
+    name:"Die Brennnessel", quote:"„Wüsste die Menschheit darum, wie heilkräftig sie ist, würde sie nichts als Brennnessel anbauen.“ – Maria Treben",
+    text:"Ausgerechnet die „Unkraut“-Pflanze am Wegrand gehört zu den am besten untersuchten Helferinnen bei Gelenk- und Muskelbeschwerden: Ihre Polyphenole greifen an denselben Entzündungs-Schaltstellen an wie bekannte Schmerzmittel – nur auf die sanfte Art. Wichtig: am besten frisch verwenden, denn Kochen zerstört einen Teil ihrer Kraft."
+  }
+ },
+ {
+  id:"darm", roman:"II", name:"Darm & Haut", sub:"Deine Mitte & ihr Spiegel",
+  intro:"Darm und Haut sind engste Verwandte – was innen aus der Balance gerät, zeigt sich oft außen.",
+  questions:[
+   "Hast du häufig nach dem Essen Gasbildung, Völlegefühl oder fühlst dich aufgebläht?",
+   "Leidest du unter unregelmäßigem Stuhlgang (z. B. Verstopfung, Durchfall)?",
+   "Hast du manchmal Konzentrationsschwierigkeiten, Kopf- oder Gelenkschmerzen nach dem Essen?",
+   "Spürst du häufig Unruhe im Bauch oder „nervöse Verdauung“?",
+   "Reagierst du empfindlich auf bestimmte Nahrungsmittel (Gluten, Milchprodukte, Zucker) – oder bekommst danach Hautreaktionen oder Pickel?",
+   "Fühlst du dich ungewöhnlich müde und erschöpft, vor allem nach dem Essen, obwohl du ausreichend schläfst?",
+   "Hast du wiederkehrende Hautprobleme wie Ekzeme oder Juckreiz, oder bemerkst Schuppen oder Hautausschläge?",
+   "Fällt dir auf, dass dein Stuhlgang gelblich ist, an der Kloschüssel „klebt“ oder eher schwimmt?",
+   "Fühlst du dich nach dem Essen schnell voll und „belastet“, ohne genau sagen zu können, warum?",
+   "Musstest du in den letzten Jahren häufiger Antibiotika nehmen?"
+  ],
+  validation:"Ein Bauch, der „macht, was er will“, und eine Haut, die immer wieder Zeichen sendet – das ist keine Empfindlichkeit, die du dir einbildest. Deine Mitte trägt gerade viel, und sie bittet hörbar um Entlastung.",
+  plant:{
+    name:"Fenchel, Kümmel & Anis", quote:"„…lockere die Blähung des Magens und fördere lösend den zaudernden Gang der lange verstopften Verdauung.“ – aus einem Lehrgedicht über den Fenchel, um 900 n. Chr.",
+    text:"Das älteste Beruhigungs-Trio für deine Mitte: Die ätherischen Öle dieser Samen besänftigen einen überreizten Magen-Darm-Trakt, lindern Blähungen und lösen Krämpfe. Mein Apothekerinnen-Kniff: die Samen unmittelbar vor dem Aufbrühen im Mörser anstoßen – erst das setzt die Öle wirklich frei."
+  }
+ },
+ {
+  id:"nerven", roman:"III", name:"Gehirn & Nervensystem", sub:"Kopf, Schlaf & Stimmung",
+  intro:"Watte im Kopf, dünne Nerven, flacher Schlaf – dein Nervensystem spricht eine leise, aber deutliche Sprache.",
+  questions:[
+   "Hast du manchmal Brain Fog, sagst Worte falsch oder verwechselst Begriffe? Fällt es dir schwer, dich länger zu konzentrieren oder klar zu denken?",
+   "Bist du vergesslicher als sonst – verpasst Termine, verlierst Dinge oder vergisst, was du gerade sagen oder tun wolltest?",
+   "Bist du morgens wie „zerschlagen“, auch nach ausreichend Schlaf? Hast du Probleme, ein- oder durchzuschlafen?",
+   "Leidest du unter Stimmungsschwankungen, fühlst dich grundlos niedergeschlagen oder antriebslos?",
+   "Hast du in letzter Zeit weniger Motivation oder Freude an Dingen, die dir normalerweise Spaß machen?",
+   "Reagierst du empfindlicher auf Lärm, Licht oder Stress?",
+   "Hast du häufiger Kopfschmerzen oder Migräne?",
+   "Kommen dir einfache Entscheidungen manchmal überfordernd vor?",
+   "Bist du häufiger ängstlich oder besorgt?",
+   "Spürst du ein anhaltendes Gefühl von innerer Unruhe oder Rastlosigkeit?"
+  ],
+  validation:"Wenn der Kopf sich wie Watte anfühlt und die Nerven dünner werden, heißt das nicht, dass du „nur gestresst“ bist oder dich zusammenreißen müsstest. Dein Nervensystem läuft seit Langem im Alarmmodus – und genau das lässt sich verstehen und besänftigen.",
+  plant:{
+    name:"Die Zitronenmelisse", quote:"„Die Melisse ist warm, und ein Mensch, der sie isst, lacht gern, weil ihre Wärme die Milz berührt und daher das Herz erfreut wird.“ – Hildegard von Bingen",
+    text:"Die Trösterin unter den Heilpflanzen: Ihre Flavonoide und ätherischen Öle wirken stimmungsaufhellend, angstlösend und nervenschützend – und sie beruhigt Gemüt UND Bauch zugleich. Ideal, wenn Sorgen und eine unruhige Verdauung Hand in Hand gehen. Als Tee oder Tinktur."
+  }
+ },
+ {
+  id:"immun", roman:"IV", name:"Immunsystem", sub:"Deine Abwehr",
+  intro:"Ein Immunsystem im Dauereinsatz wird nicht stärker – es wird erschöpft. Schauen wir, wie es deinem geht.",
+  questions:[
+   "Wirst du häufiger krank als andere in deinem Umfeld?",
+   "Brauchst du länger als früher, um nach Infekten wieder fit zu werden?",
+   "Leidest du unter chronischem Schnupfen, Heuschnupfen oder Allergien?",
+   "Hast du oft Halsschmerzen, geschwollene Lymphknoten oder leichte Temperaturerhöhungen?",
+   "Bekommst du häufig Herpes, Candida oder Pilzinfektionen?",
+   "Fühlst du dich nach kleinen Anstrengungen ungewöhnlich erschöpft?",
+   "Hast du manchmal Kribbeln, Taubheit oder „Nadelstiche“ an Händen, Füßen, Armen oder Beinen?",
+   "Hast du zufällige, stechende Schmerzen oder plötzlich auftretende Nervenschmerzen?",
+   "Wurde bei dir eine chronische Infektion (z. B. Schimmelbelastung, Borreliose oder Virusinfektion) festgestellt?",
+   "Hattest du in den letzten Jahren eine Autoimmun-Diagnose oder Symptome, die darauf hindeuten (z. B. Rheuma, Hashimoto, Lupus, Schuppenflechte, Multiple Sklerose)?"
+  ],
+  validation:"Jeden Infekt „mitnehmen“, ewig brauchen, um wieder auf die Beine zu kommen – das ist kein schwacher Charakter und kein Pech. Es ist das Bild einer Abwehr, die seit Langem im Hintergrund gegen etwas kämpft und dringend Unterstützung verdient.",
+  plant:{
+    name:"Die Holunderbeere", quote:"Ein wahres heimisches Superfood – seit jeher fester Bestandteil der Volksmedizin.",
+    text:"Der wahre Schatz des Holunders steckt nicht in den Blüten, sondern in den Beeren: Ihre einzigartige Kombination aus Polyphenolen, Vitaminen und dem Anthocyan Sambicyanin wirkt antiviral, stark antioxidativ und immunstärkend. Achtung, wichtig: Holunderbeeren nie roh essen – immer mindestens 20 Minuten bei 90 °C kochen."
+  }
+ },
+ {
+  id:"stoffwechsel", roman:"V", name:"Stoffwechsel", sub:"Blutzucker & Insulin",
+  intro:"Heißhunger, Mittagstief, hartnäckiges Bauchfett – dein Stoffwechsel erzählt mehr über Entzündungen, als du denkst.",
+  questions:[
+   "Hast du oft Heißhunger auf Süßes oder Snacks – besonders am Nachmittag?",
+   "Bist du gereizt oder zittrig, wenn du länger nichts gegessen hast?",
+   "Fällt es dir schwer, länger als 3–4 Stunden ohne Essen auszukommen – oder wirst du nicht richtig satt, obwohl du gegessen hast?",
+   "Fühlst du dich nach dem Essen müde, schläfrig oder unkonzentriert?",
+   "Leidest du nachmittags an Müdigkeit oder Kopfschmerzen, bekommst aber abends wieder Energie?",
+   "Trinkst du zuckerhaltige Getränke (Softdrinks, Fruchtsäfte, gezuckerten Kaffee/Tee)?",
+   "Nimmst du leicht am Bauch zu, auch wenn du dich normal ernährst?",
+   "Hast du Schwierigkeiten, Gewicht zu verlieren – selbst bei Bewegung oder bewusster Ernährung?",
+   "Schläfst du übermäßig viel oder hast das Gefühl, nie wirklich ausgeschlafen zu sein, egal wie lange du schläfst?",
+   "Wurden bei dir schon mal auffällige Blutzuckerwerte (erhöhter Nüchternblutzucker) oder ein auffälliger HbA1c-Wert festgestellt?"
+  ],
+  validation:"Wenn dein Gewicht sich nicht an deine Mühe hält und dein Energielevel Achterbahn fährt, liegt das nicht an fehlender Disziplin. Dahinter steckt oft eine Stoffwechsellage, in der Blutzucker, Insulin und Entzündung sich gegenseitig hochschaukeln – ein Kreislauf, den man durchbrechen kann.",
+  plant:{
+    name:"Der Ceylon-Zimt", quote:"Ein Gewürz aus deiner Küche – mit erstaunlich gut belegter Wirkung auf den Zuckerstoffwechsel.",
+    text:"Zimt kann die Insulinempfindlichkeit verbessern und den Nüchternblutzucker günstig beeinflussen – verantwortlich sind seine wasserlöslichen Polyphenole. Mein Apothekerinnen-Hinweis: unbedingt Ceylon-Zimt wählen! Der günstigere Cassia-Zimt enthält Cumarine, die in größeren Mengen belasten können."
+  }
+ },
+ {
+  id:"hormone", roman:"VI", name:"Hormonelles System", sub:"Zyklus & innere Balance",
+  intro:"Hinweis: Dieser Bereich bezieht sich speziell auf den weiblichen Zyklus. Bei Männern zeigen sich stille Entzündungen häufig in anderen Bereichen – beantworte hier einfach, was auf dich zutrifft.",
+  questions:[
+   "Schwankt deine Stimmung stark im Verlauf deines Zyklus?",
+   "Hast du zyklusabhängige Symptome wie Brustspannen, Wassereinlagerungen, Blähbauch, Migräne, Schmerzen oder Hautprobleme?",
+   "Ist dein Zyklus unregelmäßig, schmerzhaft oder die Blutung übermäßig stark/schwach?",
+   "Leidest du an Schlafstörungen, Stimmungsschwankungen oder Reizbarkeit?",
+   "Spürst du einen Libidoverlust oder sexuelles Desinteresse?",
+   "Fühlst du dich häufig erschöpft und ausgelaugt, vor allem am Nachmittag?",
+   "Ist dir häufig kalt – besonders an Händen und Füßen?",
+   "Hast du unerklärliche Gewichtsschwankungen?",
+   "Leidest du unter Hitzewallungen oder Nachtschweiß?",
+   "Hast du eine Gewichtszunahme festgestellt, besonders am Bauch, obwohl du dich nicht anders ernährst?"
+  ],
+  validation:"Ein Zyklus, der dich jeden Monat aus der Bahn wirft, Hitzewallungen, Erschöpfung, Stimmungstiefs – all das ist nicht „eben Frausein“, das man auszuhalten hat. Dein Hormonsystem ist fein wie ein Uhrwerk, und stille Entzündungen können genau dieses Uhrwerk stören.",
+  plant:{
+    name:"Die Schafgarbe", quote:"„Viel Unheil bliebe den Frauen erspart, würden sie ab und zu einmal nach Schafgarbe greifen.“ – Pfarrer Kneipp",
+    text:"Das alte „Soldatenkraut“ ist eine der großen Frauenpflanzen: Ihre Kombination aus Gerbstoffen, Flavonoiden und ätherischen Ölen wirkt bei Blutungen, Entzündungen und Krämpfen – und harmonisiert nebenbei einen stress- oder zyklusgeplagten Bauch. Wunderbar als Tee oder Tinktur."
+  }
+ }
+];
+
+const LEVELS = [
+  {min:0,  max:9,  label:"leise",     text:"In diesem Bereich sendet dein Körper aktuell nur wenige Signale – ein gutes Zeichen. Behalte ihn liebevoll im Blick."},
+  {min:10, max:19, label:"hörbar",    text:"Hier klopft dein Körper bereits vernehmlich an. Noch ist es ein Flüstern – der beste Zeitpunkt, um hinzuhören."},
+  {min:20, max:29, label:"deutlich",  text:"In diesem Bereich spricht dein Körper eine deutliche Sprache. Diese Häufung von Zeichen verdient jetzt deine Aufmerksamkeit."},
+  {min:30, max:40, label:"dringlich", text:"Dein Körper ruft hier laut um Unterstützung. Bitte nimm diese Signale ernst – und besprich anhaltende Beschwerden auch ärztlich."}
+];
+
+/* ─── State ─── */
+const answers = AREAS.map(a => a.questions.map(()=>null));
+let curArea = 0, curQ = -1; // curQ = -1 → Kapitelkarte
+const TOTAL = AREAS.reduce((s,a)=>s+a.questions.length,0);
+
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); window.scrollTo({top:0,behavior:"smooth"}); };
+
+/* ─── Quiz-Rendering ─── */
+function answeredCount(){ return answers.flat().filter(v=>v!==null).length; }
+
+function renderProgress(){
+  const done = answeredCount();
+  $("p-fill").style.width = (done/TOTAL*100)+"%";
+  $("p-area").textContent = "Bereich "+AREAS[curArea].roman+" · "+AREAS[curArea].name;
+  $("p-count").textContent = done+" / "+TOTAL+" Fragen";
+}
+
+function renderChapter(){
+  const a = AREAS[curArea];
+  $("question-holder").innerHTML = "";
+  $("chapter-holder").innerHTML = `
+    <div class="chapter">
+      <svg class="plantmark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 37V14" stroke="#5A7357" stroke-width="2"/><path d="M20 26C14 24 10 19 10 12c6 1 10 6 10 14Z" fill="#8FA486"/><path d="M20 20c6-2 10-7 10-14-6 1-10 6-10 14Z" fill="#5A7357"/></svg>
+      <div class="roman">Bereich ${a.roman} von VI</div>
+      <h2>${a.name}</h2>
+      <p style="font-family:var(--font-display);font-style:italic;font-size:1.05rem;margin-bottom:8px">${a.sub}</p>
+      <p>${a.intro}</p>
+      <button class="cta" style="margin-top:22px" id="btn-chapter">Weiter →</button>
+    </div>`;
+  $("btn-chapter").onclick = ()=>{ curQ = 0; renderQuestion(); };
+  $("btn-chapter").focus({preventScroll:true});
+  renderProgress();
+}
+
+function renderQuestion(){
+  const a = AREAS[curArea];
+  const q = a.questions[curQ];
+  $("chapter-holder").innerHTML = "";
+  $("question-holder").innerHTML = `
+    <div class="qcard">
+      <div class="qarea">Bereich ${a.roman} · ${a.name} · Frage ${curQ+1}/${a.questions.length}</div>
+      <div class="qtext">${q}</div>
+      <div class="answers">
+        ${SCALE.map(s=>`
+          <button class="ans ${answers[curArea][curQ]===s.v?'selected':''}" data-v="${s.v}">
+            <span style="display:flex;align-items:center;gap:12px"><span class="num">${s.v}</span> ${s.l}</span>
+            ${answers[curArea][curQ]===s.v?'<span aria-hidden="true">🌿</span>':''}
+          </button>`).join("")}
+      </div>
+      <div class="backrow">
+        <button class="linkbtn" id="btn-back">← zurück</button>
+        <span style="font-size:.78rem;color:#8A927F">Antworte radikal ehrlich – nur Symptome der letzten 1–3 Monate.</span>
+      </div>
+    </div>`;
+  document.querySelectorAll(".ans").forEach(b=>{
+    b.onclick = ()=>{
+      answers[curArea][curQ] = parseInt(b.dataset.v,10);
+      b.classList.add("selected");
+      renderProgress();
+      setTimeout(next, 220);
+    };
+  });
+  $("btn-back").onclick = prev;
+  renderProgress();
+}
+
+function next(){
+  const a = AREAS[curArea];
+  if(curQ < a.questions.length-1){ curQ++; renderQuestion(); }
+  else if(curArea < AREAS.length-1){ curArea++; curQ = -1; renderChapter(); }
+  else finishQuiz();
+}
+function prev(){
+  if(curQ > 0){ curQ--; renderQuestion(); }
+  else if(curQ === 0){ curQ = -1; renderChapter(); }
+  else if(curArea > 0){ curArea--; curQ = AREAS[curArea].questions.length-1; renderQuestion(); }
+}
+
+/* ─── Auswertung ─── */
+function scores(){ return AREAS.map((a,i)=>({ id:a.id, name:a.name, roman:a.roman, pts: answers[i].reduce((s,v)=>s+(v||0),0) })); }
+function topArea(){ return scores().slice().sort((x,y)=>y.pts-x.pts)[0]; }
+function levelFor(pts){ return LEVELS.find(l=>pts>=l.min && pts<=l.max) || LEVELS[0]; }
+
+function radarSVG(sc, size, reveal){
+  const cx=size/2, cy=size/2, R=size*0.34, N=sc.length;
+  const pt=(i,r)=>{ const ang=-Math.PI/2 + i*2*Math.PI/N; return [cx+r*Math.cos(ang), cy+r*Math.sin(ang)]; };
+  let grid="";
+  [0.25,0.5,0.75,1].forEach(f=>{
+    grid += "<polygon points='"+sc.map((_,i)=>pt(i,R*f).join(",")).join(" ")+"' fill='none' stroke='#C9C0A8' stroke-width='1' "+(f<1?"stroke-dasharray='3 4'":"")+"/>";
+  });
+  let axes="", labels="";
+  sc.forEach((s,i)=>{
+    const [x,y]=pt(i,R); axes+=`<line x1='${cx}' y1='${cy}' x2='${x}' y2='${y}' stroke='#C9C0A8' stroke-width='1'/>`;
+    const [lx,ly]=pt(i,R+size*0.09);
+    const anchor = Math.abs(lx-cx)<8 ? "middle" : (lx>cx ? "start":"end");
+    labels+=`<text x='${lx}' y='${ly}' text-anchor='${anchor}' font-size='${size*0.032}' fill='#22382B' font-family='Karla,sans-serif' font-weight='700'>${s.roman}</text>
+             <text x='${lx}' y='${ly+size*0.038}' text-anchor='${anchor}' font-size='${size*0.026}' fill='#6B7566' font-family='Karla,sans-serif'>${s.name}</text>`;
+  });
+  const poly = sc.map((s,i)=>pt(i, R*Math.max(s.pts,1.2)/40).join(",")).join(" ");
+  const dots = sc.map((s,i)=>{ const [x,y]=pt(i,R*Math.max(s.pts,1.2)/40); return `<circle cx='${x}' cy='${y}' r='${size*0.012}' fill='#5A7357'/>`; }).join("");
+  return `<svg viewBox='0 0 ${size} ${size}' role='img' aria-label='Entzündungs-Kompass über sechs Körperbereiche' style='width:100%;max-width:460px;display:block;margin:0 auto'>
+    ${grid}${axes}
+    <polygon points='${poly}' fill='rgba(90,115,87,${reveal?0.35:0.5})' stroke='#5A7357' stroke-width='2.5' stroke-linejoin='round'/>
+    ${dots}${labels}
+  </svg>`;
+}
+
+function finishQuiz(){
+  $("locked-preview").innerHTML = "<div class='chartcard'><div class='cap'>Dein Entzündungs-Kompass</div>"+radarSVG(scores(), 480, false)+"</div>";
+  $("privacy-link").href = CONFIG.PRIVACY_URL;
+  show("s-gate");
+}
+
+/* ─── Opt-in & Versand ─── */
+$("btn-reveal") && ($("btn-reveal").onclick = async ()=>{
+  const email = $("f-email").value.trim();
+  const name  = $("f-name").value.trim();
+  const err   = $("f-err");
+  err.classList.remove("show");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ err.textContent="Bitte gib eine gültige E-Mail-Adresse ein."; err.classList.add("show"); return; }
+  if(!$("f-consent").checked){ err.textContent="Bitte bestätige kurz die Einwilligung – ohne sie dürfen wir dir deine Auswertung nicht schicken."; err.classList.add("show"); return; }
+
+  const t = topArea();
+  const payload = {
+    email, firstname:name, consent:true, source:"entzuendungs-test",
+    timestamp:new Date().toISOString(),
+    scores:Object.fromEntries(scores().map(s=>[s.id,s.pts])),
+    topAreaId:t.id, topAreaName:t.name, topAreaLevel:levelFor(t.pts).label
+  };
+  const btn = $("btn-reveal"); btn.disabled = true; btn.textContent = "Einen Moment …";
+  if(CONFIG.WEBHOOK_URL){
+    try{ await fetch(CONFIG.WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); }
+    catch(e){ console.error("Webhook-Fehler:",e); }
+  } else { console.log("DEMO-MODUS – Payload:", payload); }
+  renderResult(name);
+});
+
+/* ─── Ergebnis-Screen ─── */
+function renderResult(name){
+  const sc = scores();
+  const t  = topArea();
+  const lvl = levelFor(t.pts);
+  const area = AREAS.find(a=>a.id===t.id);
+  const sorted = sc.slice().sort((x,y)=>y.pts-x.pts);
+  const hello = name ? name+", dein" : "Dein";
+
+  $("s-result").innerHTML = `
+    <div class="result-head">
+      <div class="roman">Deine Auswertung</div>
+      <h2>${hello} Schwerpunkt liegt im Bereich<br><em>${area.roman} · ${area.name}</em></h2>
+      <p style="margin-top:10px;color:#4A574C">Signalstärke in diesem Bereich: <b>${lvl.label}</b> (${t.pts} von 40 Punkten)</p>
+    </div>
+
+    <div class="chartcard">
+      <div class="cap">Dein Entzündungs-Kompass</div>
+      ${radarSVG(sc, 480, true)}
+      <div class="legend">
+        ${sorted.map((s,i)=>`
+          <div class="row ${i===0?'top':''}">
+            <span class="name"><b>${s.roman}</b> · ${s.name}${i===0?'<span class="badge-top">Schwerpunkt</span>':''}</span>
+            <span class="pts">${s.pts} / 40</span>
+            <div class="trackwrap"><div class="track" data-w="${s.pts/40*100}"></div></div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="interp">
+      <h3>Was dir dein Kompass sagt</h3>
+      <p><b>Zuerst das Wichtigste:</b> Du bildest dir das nicht ein. ${area.validation}</p>
+      <p>${lvl.text}</p>
+      <p>Und jetzt die gute Nachricht: Häufen sich die Zeichen in einem Bereich, ist das kein Urteil – es ist eine <b>Landkarte</b>. Du weißt jetzt, wo dein Körper zuerst Unterstützung braucht. Genau dort setzen wir an.</p>
+    </div>
+
+    <div class="teaser">
+      <h3>🌿 Dein erster pflanzlicher Verbündeter</h3>
+      <p class="plantname">${area.plant.name}</p>
+      <p class="quote">${area.plant.quote}</p>
+      <p>${area.plant.text}</p>
+      <p class="more"><b>Das ist erst der Anfang:</b> Deine vollständige Quick-Fix-Soforthilfe für den Bereich ${area.name} – mit weiteren Pflanzen, Anwendung und meinen Rezepturen – ist bereits auf dem Weg in dein Postfach. 📬</p>
+    </div>
+
+    <div class="mailnote">
+      <b>Schau in dein Postfach:</b> Bitte bestätige kurz deine Anmeldung (Double-Opt-in) – direkt danach bekommst du deinen Kompass &amp; deine Quick-Fix-Empfehlung. Keine Mail? Wirf einen Blick in den Spam-Ordner.
+    </div>
+
+    <div class="bookbox">
+      <div class="roman">Ein ehrliches Wort zum Schluss</div>
+      <h3>Quick-Fixes lindern deine Beschwerden.<br>Gelöscht werden Entzündungsherde anders.</h3>
+      <p>Soforthilfen besänftigen die Symptome – und das dürfen sie auch. Aber solange die Entzündungsherde selbst weiter glimmen, kommen die Beschwerden zurück. Der nachhaltige Weg führt über die Wiederherstellung deiner natürlichen Balance.</p>
+      <p>Genau dafür habe ich meinen <b>RESET-Plan</b> entwickelt: fünf Schritte, mit denen du die Ursachen stiller Entzündungen ganzheitlich angehst – statt ein Leben lang Symptome zu verwalten. Du findest ihn in meinem Buch <i>„Die Naturapothekerin für stille Entzündungen“</i> (Goldegg Verlag, 18. Januar 2027) – zusammen mit diesem Test, allen Quick-Fixes und über 200 Seiten fundiertem Heilpflanzenwissen.</p>
+      <a class="cta" style="text-decoration:none;text-align:center" href="${CONFIG.BOOK_URL}" target="_blank" rel="noopener">Zum Buch → jetzt vorbestellen</a>
+    </div>
+
+    <p class="disclaimer">Dieser Test ersetzt keine ärztliche Abklärung und stellt keine Diagnose. Er möchte dir helfen, die Botschaften deines Körpers besser zu deuten. Bitte kläre anhaltende oder starke Beschwerden ärztlich ab – und besprich die Anwendung von Heilpflanzen bei Vorerkrankungen, Medikamenteneinnahme, Schwangerschaft oder Stillzeit vorab mit Ärztin, Therapeut oder Apothekerin deines Vertrauens.</p>
+  `;
+  show("s-result");
+  requestAnimationFrame(()=>{ setTimeout(()=>{ document.querySelectorAll(".track").forEach(el=>el.style.width = el.dataset.w+"%"); }, 120); });
+}
+
+/* ─── Init ─── */
+$("btn-start").onclick = ()=>{ show("s-quiz"); renderChapter(); };
+$("privacy-link-2").href = CONFIG.PRIVACY_URL;
+$("imprint-link").href = CONFIG.IMPRINT_URL;
+</script>
+</body>
+</html>
