@@ -985,35 +985,76 @@
         <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
         <script>
         (function(){
-          /* Erweitertes Alfima-Handling:
-             - Original: Iframe-Resize + Redirect zur Alfima-Danke-Seite
-             - Angepasst: Redirect wird ABGEFANGEN → stattdessen decken wir
-               das Ergebnis auf der eigenen Seite auf. Der User bleibt hier,
-               Alfima triggert im Hintergrund seine Automation weiter. */
+          /* ═══════════════════════════════════════════════════════════
+             ALFIMA-HANDLER MIT DEBUG-MODUS
+             Zum Diagnostizieren: alle Nachrichten werden in die Browser-
+             Konsole geloggt. Nach erfolgreichem Test DEBUG auf false setzen.
+             ═══════════════════════════════════════════════════════════ */
+          var DEBUG = true;
           var host = "alfima.com";
           var iframe = document.currentScript && document.currentScript.previousElementSibling;
           var handled = false;
 
+          function log(prefix, msg){
+            if(DEBUG) console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600", msg);
+          }
+          function warn(prefix, msg){
+            console.warn("%c[Alfima] "+prefix, "color:#8C4A3C;font-weight:600", msg);
+          }
+
+          log("Handler initialisiert. Iframe:", iframe && iframe.src);
+          log("revealResultAfterOptin verfügbar:", typeof window.revealResultAfterOptin);
+
           window.addEventListener("message", function(e){
+            /* JEDE Nachricht wird geloggt — nur so sehen wir, was Alfima sendet. */
+            log("Nachricht empfangen von "+e.origin+":", e.data);
+
+            /* Origin-Prüfung */
+            var isFromAlfima = false;
             try {
               var origin = new URL(e.origin);
-              if(origin.hostname !== host && !origin.hostname.endsWith("." + host)) return;
-            } catch(err) { return; }
-            if(!e.data || typeof e.data.type !== "string") return;
+              isFromAlfima = origin.hostname === host || origin.hostname.endsWith("." + host);
+            } catch(err) {}
 
-            if(e.data.type === "alfima-embed-resize"){
+            if(!isFromAlfima){
+              log("→ Ignoriert (Origin nicht alfima.com)", e.origin);
+              return;
+            }
+
+            if(!e.data || typeof e.data.type !== "string"){
+              log("→ Ignoriert (kein type-Feld)", e.data);
+              return;
+            }
+
+            var type = e.data.type;
+
+            /* Resize-Nachrichten: Iframe-Höhe anpassen, still weiterlaufen */
+            if(type === "alfima-embed-resize"){
               if(iframe && iframe.tagName === "IFRAME") iframe.style.height = e.data.height + "px";
+              return;
             }
-            else if(e.data.type === "alfima-embed-redirect" && !handled){
+
+            /* Redirect / Submit-Success ABFANGEN.
+               Großzügige Erkennung: nicht nur "alfima-embed-redirect",
+               sondern jeder Typ, der auf einen erfolgreichen Submit hinweist. */
+            var isRedirectLike = /redirect|submit|success|complete|thank|done|finish/i.test(type);
+            if(isRedirectLike && !handled){
               handled = true;
-              /* Redirect NICHT ausführen — stattdessen Ergebnis inline anzeigen. */
+              log("→ REDIRECT/SUBMIT ABGEFANGEN. Type: "+type, e.data);
+
               if(typeof window.revealResultAfterOptin === "function"){
+                log("→ Ergebnis wird enthüllt.");
                 window.revealResultAfterOptin(e.data.url || "");
-              } else if(typeof e.data.url === "string" && /^https?:\/\//.test(e.data.url)){
-                /* Fallback, falls unser Callback nicht existiert: doch redirecten. */
-                window.top.location.href = e.data.url;
+              } else {
+                warn("revealResultAfterOptin() nicht gefunden!", "Fallback: Redirect ausführen.");
+                if(typeof e.data.url === "string" && /^https?:\/\//.test(e.data.url)){
+                  window.top.location.href = e.data.url;
+                }
               }
+              return;
             }
+
+            log("→ Nichts zu tun mit type: "+type);
           });
         })();
         </script>
@@ -1441,6 +1482,9 @@ $("btn-start-1").onclick = startTest;
 $("btn-start-2").onclick = startTest;
 $("privacy-link-2").href = CONFIG.PRIVACY_URL;
 $("imprint-link").href = CONFIG.IMPRINT_URL;
+
+/* Debug-Bestätigung: wenn du "OK" in der Konsole siehst, ist alles bereit. */
+console.log("%c[Test] Haupt-Script geladen. revealResultAfterOptin bereit: "+(typeof window.revealResultAfterOptin === "function" ? "OK ✓" : "FEHLT ✗"), "color:#6B8570;font-weight:600");
 </script>
 </body>
 </html>
