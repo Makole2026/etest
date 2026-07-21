@@ -254,6 +254,8 @@
     height:auto;
   }
   .trust b{color:var(--ink);font-weight:600;display:block;margin-bottom:3px}
+  .trust a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;transition:color .18s ease}
+  .trust a:hover{color:var(--sage-deep)}
 
   /* ═══ SCREEN 2 · QUIZ ═══ */
   .progress{
@@ -423,7 +425,7 @@
     transition:color .15s ease, background .15s ease;
   }
   .linkbtn:hover{color:var(--ink);background:var(--cream-deep)}
-  .qhint{font-family:var(--body);font-size:.78rem;color:var(--muted);font-style:italic}
+  .qhint{font-family:var(--body);font-size:.78rem;color:var(--muted);font-style:italic;flex:1;min-width:180px;text-align:right;line-height:1.5}
 
   /* ═══ SCREEN 3 · OPT-IN ═══ */
   .kicker{
@@ -460,37 +462,52 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:14px;
+    gap:20px;
     z-index:2;
   }
   .lockbadge .seal{
-    width:82px;
-    height:82px;
+    width:170px;
+    height:170px;
     border-radius:50%;
     background:var(--ink);
-    color:var(--cream);
+    color:var(--white);
     display:grid;
     place-items:center;
-    box-shadow:var(--shadow);
+    box-shadow:var(--shadow-lg);
     font-family:var(--serif);
-    font-size:.72rem;
-    letter-spacing:.14em;
+    font-size:1.5rem;
+    letter-spacing:.08em;
     text-align:center;
-    line-height:1.3;
+    line-height:1.15;
     text-transform:uppercase;
     font-weight:500;
-    border:2px solid var(--cream);
+    border:3px solid var(--cream);
     outline:2px solid var(--ink);
+  }
+  @media (max-width:520px){
+    .lockbadge .seal{width:140px;height:140px;font-size:1.25rem}
   }
   .lockbadge .lhint{
     background:var(--white);
-    border:1px solid var(--line);
+    border:1.5px solid var(--ink);
     border-radius:99px;
-    padding:10px 22px;
-    font-size:.9rem;
+    padding:14px 26px;
+    font-family:var(--body);
+    font-size:.92rem;
     color:var(--ink);
-    box-shadow:var(--shadow-sm);
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    text-decoration:none;
+    font-weight:500;
+    transition:background .18s ease, color .18s ease, transform .18s ease;
+    display:inline-block;
   }
+  .lockbadge .lhint:hover{
+    background:var(--ink);
+    color:var(--white);
+    transform:translateY(-2px);
+  }
+  .lockbadge .lhint:focus-visible{outline:3px solid var(--sage);outline-offset:3px}
 
   .optin{
     background:var(--white);
@@ -599,6 +616,22 @@
     color:var(--muted);
     margin-top:14px;
     font-style:italic;
+  }
+
+  /* Alfima-Iframe-Container */
+  .formembed{
+    margin-top:32px;
+    scroll-margin-top:24px;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    padding:8px;
+    overflow:hidden;
+  }
+  .formembed iframe{
+    display:block;
+    border-radius:calc(var(--radius-lg) - 8px);
   }
 
   /* ═══ SCREEN 4 · ERGEBNIS ═══ */
@@ -896,7 +929,7 @@
       <div class="benefits">
         <div class="benefit">
           <div class="bnum">1</div>
-          <p><b>60 kurze Fragen, ca. 4 Minuten.</b></p>
+          <p><b>60 kurze Fragen.</b> Ca. 4 Minuten.</p>
         </div>
         <div class="benefit">
           <div class="bnum">2</div>
@@ -916,7 +949,7 @@
         <img src="die_naturapothekerin.png" alt="" class="tlogo">
         <div>
           <b>Dr. Nelli Klameth</b>
-          Promovierte Apothekerin &amp; Naturheilkundlerin. Der Test stammt aus ihrem Buch „Die Naturapothekerin für stille Entzündungen" (Goldegg Verlag, 2027).
+          Promovierte Apothekerin &amp; Naturheilkundlerin. Der Test stammt aus ihrem Buch <a href="https://shop.autorenwelt.de/products/die-naturapothekerin-fur-stille-entzundungen-von-nelli-klameth" target="_blank" rel="noopener">„Die Naturapothekerin für stille Entzündungen"</a> (Goldegg Verlag, 2027).
         </div>
       </div>
     </section>
@@ -939,46 +972,17 @@
       <p class="kicker">Deine Auswertung ist fertig</p>
       <h1 class="mid">Dein Entzündungs-Kompass<br><em>ist bereit für dich.</em></h1>
 
-      <div class="lockedwrap" aria-hidden="true">
-        <div class="locked" id="locked-preview"></div>
+      <div class="lockedwrap">
+        <div class="locked" id="locked-preview" aria-hidden="true"></div>
         <div class="lockbadge">
           <div class="seal">Dein<br>Ergebnis</div>
-          <p class="lhint">🌿 Trag dich ein, um deinen Kompass aufzudecken</p>
+          <a class="lhint" href="#optin-form">🌿 Trag dich ein &amp; deck deinen Kompass auf →</a>
         </div>
       </div>
 
-      <div class="optin">
-        <h3>Wohin dürfen wir deinen Kompass schicken?</h3>
-        <p class="sub">Du bekommst deine Auswertung sofort hier angezeigt — und zusätzlich per E-Mail:</p>
-        <ul>
-          <li>
-            <svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#000"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FDFBF5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>deinen vollständigen <b>Entzündungs-Kompass</b> zum Abspeichern,</span>
-          </li>
-          <li>
-            <svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#000"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FDFBF5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>deine <b>passenden Heilpflanzen</b> für deinen persönlichen Schwerpunkt,</span>
-          </li>
-          <li>
-            <svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#000"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#FDFBF5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>und meine wöchentliche Post mit fundiertem Heilpflanzenwissen &amp; Rezepturen.</span>
-          </li>
-        </ul>
-        <div class="field">
-          <label for="f-name">Dein Vorname (optional)</label>
-          <input type="text" id="f-name" autocomplete="given-name" placeholder="z. B. Sabine">
-        </div>
-        <div class="field">
-          <label for="f-email">Deine E-Mail-Adresse *</label>
-          <input type="email" id="f-email" autocomplete="email" placeholder="name@beispiel.de" required>
-        </div>
-        <label class="consent">
-          <input type="checkbox" id="f-consent">
-          <span>Ja, ich möchte meine Test-Auswertung und den Newsletter „Die Naturapothekerin" per E-Mail erhalten. Der Versand erfolgt gemäß <a href="#" id="privacy-link" target="_blank" rel="noopener">Datenschutzerklärung</a>; eine Abmeldung ist jederzeit über den Link in jeder E-Mail möglich. Zur Sicherheit bestätigst du deine Anmeldung noch einmal per Klick (Double-Opt-in).</span>
-        </label>
-        <p class="err" id="f-err"></p>
-        <button class="btn-primary full" id="btn-reveal">Kompass aufdecken &amp; per Mail erhalten 🌿</button>
-        <p class="metanote">Kein Spam. Nur Post, die dir wirklich weiterhilft.</p>
+      <div id="optin-form" class="formembed">
+        <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
+        <script>(function(){var u=new URL("https://alfima.com/nellikla/leads/Entzuendungstest/embed");var allowedOrigin=u.origin;var iframe=document.currentScript&&document.currentScript.previousElementSibling;window.addEventListener("message",function(e){if(e.origin!==allowedOrigin)return;if(!e.data||typeof e.data.type!=="string")return;if(e.data.type==="alfima-embed-resize"){if(iframe&&iframe.tagName==="IFRAME")iframe.style.height=e.data.height+"px";}else if(e.data.type==="alfima-embed-redirect"){var url=e.data.url;if(typeof url==="string"&&/^https?:\/\//.test(url)){window.top.location.href=url;}}});})();</script>
       </div>
     </section>
 
@@ -997,15 +1001,19 @@
    KONFIGURATION — vor Live-Schaltung anpassen
    ═══════════════════════════════════════════════════════════════ */
 const CONFIG = {
-  WEBHOOK_URL: "",  // leer = Demo-Modus
   PRIVACY_URL: "https://www.naturgesund-nelliklameth.de/datenschutz",
   IMPRINT_URL: "https://www.naturgesund-nelliklameth.de/impressum",
-  BOOK_URL:    "https://www.goldegg-verlag.com/titel/die-naturapothekerin-fuer-stille-entzuendungen/"
+  BOOK_URL:    "https://shop.autorenwelt.de/products/die-naturapothekerin-fur-stille-entzundungen-von-nelli-klameth"
 };
 
 /* ─── Testinhalte: Original aus dem Buch ─── */
 const SCALE = [
   {v:0,l:"niemals"},{v:1,l:"selten"},{v:2,l:"manchmal"},{v:3,l:"oft"},{v:4,l:"immer"}
+];
+
+/* Alternative Ja/Nein-Skala für binäre Fragen (Diagnose-artig) */
+const YESNO_SCALE = [
+  {v:0,l:"nein"},{v:1,l:"ich weiß es nicht"},{v:2,l:"vielleicht"},{v:3,l:"wahrscheinlich"},{v:4,l:"ja"}
 ];
 
 const AREAS = [
@@ -1088,6 +1096,7 @@ const AREAS = [
    "Hattest du in den letzten Jahren eine Autoimmun-Diagnose oder Symptome, die darauf hindeuten (z. B. Rheuma, Hashimoto, Lupus, Schuppenflechte, Multiple Sklerose)?"
   ],
   validation:"Jeden Infekt „mitnehmen“, ewig brauchen, um wieder auf die Beine zu kommen — das ist kein schwacher Charakter und kein Pech. Es ist das Bild einer Abwehr, die seit Langem im Hintergrund gegen etwas kämpft und dringend Unterstützung verdient.",
+  scaleOverrides: {8: YESNO_SCALE, 9: YESNO_SCALE},
   plant:{
     name:"Die Holunderbeere", quote:"Ein wahres heimisches Superfood — seit jeher fester Bestandteil der Volksmedizin.",
     text:"Der wahre Schatz des Holunders steckt nicht in den Blüten, sondern in den Beeren: Ihre einzigartige Kombination aus Polyphenolen, Vitaminen und dem Anthocyan Sambicyanin wirkt antiviral, stark antioxidativ und immunstärkend. Achtung, wichtig: Holunderbeeren nie roh essen — immer mindestens 20 Minuten bei 90 °C kochen."
@@ -1109,6 +1118,7 @@ const AREAS = [
    "Wurden bei dir schon mal auffällige Blutzuckerwerte (erhöhter Nüchternblutzucker) oder ein auffälliger HbA1c-Wert festgestellt?"
   ],
   validation:"Wenn dein Gewicht sich nicht an deine Mühe hält und dein Energielevel Achterbahn fährt, liegt das nicht an fehlender Disziplin. Dahinter steckt oft eine Stoffwechsellage, in der Blutzucker, Insulin und Entzündung sich gegenseitig hochschaukeln — ein Kreislauf, den man durchbrechen kann.",
+  scaleOverrides: {9: YESNO_SCALE},
   plant:{
     name:"Der Ceylon-Zimt", quote:"Ein Gewürz aus deiner Küche — mit erstaunlich gut belegter Wirkung auf den Zuckerstoffwechsel.",
     text:"Zimt kann die Insulinempfindlichkeit verbessern und den Nüchternblutzucker günstig beeinflussen — verantwortlich sind seine wasserlöslichen Polyphenole. Mein Apothekerinnen-Hinweis: unbedingt Ceylon-Zimt wählen! Der günstigere Cassia-Zimt enthält Cumarine, die in größeren Mengen belasten können."
@@ -1116,7 +1126,7 @@ const AREAS = [
  },
  {
   id:"hormone", roman:"VI", name:"Hormonelles System", sub:"Zyklus & innere Balance",
-  intro:"Hinweis: Dieser Bereich bezieht sich speziell auf den weiblichen Zyklus. Bei Männern zeigen sich stille Entzündungen häufig in anderen Bereichen — beantworte hier einfach, was auf dich zutrifft.",
+  intro:"Dieser Abschnitt bezieht sich speziell auf den weiblichen Zyklus; bei Männern zeigen sich stille Entzündungen hingegen häufig in anderen Belastungsbereichen.",
   questions:[
    "Schwankt deine Stimmung stark im Verlauf deines Zyklus?",
    "Hast du zyklusabhängige Symptome wie Brustspannen, Wassereinlagerungen, Blähbauch, Migräne, Schmerzen oder Hautprobleme?",
@@ -1192,13 +1202,14 @@ function renderChapter(){
 function renderQuestion(){
   const a = AREAS[curArea];
   const q = a.questions[curQ];
+  const scale = (a.scaleOverrides && a.scaleOverrides[curQ]) || SCALE;
   $("chapter-holder").innerHTML = "";
   $("question-holder").innerHTML = `
     <div class="qcard">
       <div class="qarea">Bereich ${a.roman} · ${a.name} · Frage ${curQ+1} von ${a.questions.length}</div>
       <div class="qtext">${q}</div>
       <div class="answers" role="radiogroup" aria-label="Antwortoptionen">
-        ${SCALE.map(s=>`
+        ${scale.map(s=>`
           <button class="ans ${answers[curArea][curQ]===s.v?'selected':''}" data-v="${s.v}" role="radio" aria-checked="${answers[curArea][curQ]===s.v}">
             <span class="num">${s.v}</span>
             <span class="lbl">${s.l}</span>
@@ -1207,7 +1218,7 @@ function renderQuestion(){
       </div>
       <div class="backrow">
         <button class="linkbtn" id="btn-back">← zurück</button>
-        <span class="qhint">Antworte ehrlich — nur auf die letzten 1–3 Monate bezogen.</span>
+        <span class="qhint">Bitte beantworte die Fragen radikal ehrlich und beziehe nur aktuell auftretende Symptome ein (präsent in den letzten 1–3 Monaten).</span>
       </div>
     </div>`;
   document.querySelectorAll(".ans").forEach(b=>{
@@ -1266,39 +1277,31 @@ function radarSVG(sc, size, reveal){
 
 function finishQuiz(){
   $("locked-preview").innerHTML = "<div class='chartcard'><div class='cap'>Dein Entzündungs-Kompass</div>"+radarSVG(scores(), 480, false)+"</div>";
-  $("privacy-link").href = CONFIG.PRIVACY_URL;
+
+  /* Ergebnisse an Alfima-Iframe übergeben (als URL-Parameter),
+     damit die passende Heilpflanzen-Mail zum Schwerpunkt versendet werden kann. */
+  const t = topArea();
+  const sc = scores();
+  const params = new URLSearchParams();
+  params.set("topAreaId",    t.id);
+  params.set("topAreaName",  t.name);
+  params.set("topAreaLevel", levelFor(t.pts).label);
+  params.set("topAreaPts",   t.pts);
+  sc.forEach(s => params.set("score_"+s.id, s.pts));
+
+  const iframe = document.querySelector("#optin-form iframe");
+  if(iframe){
+    const baseUrl = "https://alfima.com/nellikla/leads/Entzuendungstest/embed";
+    iframe.src = baseUrl + "?" + params.toString();
+  }
+
   show("s-gate");
 }
 
-/* ─── Opt-in & Versand ─── */
-$("btn-reveal").onclick = async ()=>{
-  const email = $("f-email").value.trim();
-  const name  = $("f-name").value.trim();
-  const err   = $("f-err");
-  err.classList.remove("show");
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
-    err.textContent="Bitte gib eine gültige E-Mail-Adresse ein.";
-    err.classList.add("show"); return;
-  }
-  if(!$("f-consent").checked){
-    err.textContent="Bitte bestätige kurz die Einwilligung — ohne sie dürfen wir dir deine Auswertung nicht schicken.";
-    err.classList.add("show"); return;
-  }
-
-  const t = topArea();
-  const payload = {
-    email, firstname:name, consent:true, source:"entzuendungs-test",
-    timestamp:new Date().toISOString(),
-    scores:Object.fromEntries(scores().map(s=>[s.id,s.pts])),
-    topAreaId:t.id, topAreaName:t.name, topAreaLevel:levelFor(t.pts).label
-  };
-  const btn = $("btn-reveal"); btn.disabled = true; btn.textContent = "Einen Moment …";
-  if(CONFIG.WEBHOOK_URL){
-    try{ await fetch(CONFIG.WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); }
-    catch(e){ console.error("Webhook-Fehler:",e); }
-  } else { console.log("DEMO-MODUS — Payload:", payload); }
-  renderResult(name);
-};
+/* ─── Ergebnis-Screen (renderResult) bleibt im Code erhalten für spätere Integration:
+   wird derzeit nicht automatisch aufgerufen, da Alfima die Weiterleitung/Auslieferung übernimmt.
+   Falls du später wieder eine On-Page-Auswertung willst, kann renderResult(name) über einen
+   postMessage-Handler von Alfima getriggert werden. ─── */
 
 /* ─── Ergebnis-Screen ─── */
 function renderResult(name){
