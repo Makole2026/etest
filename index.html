@@ -982,10 +982,7 @@
       </div>
 
       <div id="optin-form" class="formembed">
-        <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed"
-                sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                style="width:100%;border:none;min-height:400px;"
-                title="Lead Form"></iframe>
+        <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
         <script>
         (function(){
           /* ═══════════════════════════════════════════════════════════
@@ -1046,6 +1043,26 @@
             if(isRedirectLike && !handled){
               handled = true;
               log("→ REDIRECT/SUBMIT ABGEFANGEN. Type: "+type, e.data);
+
+              /* KRITISCH: Iframe SOFORT unschädlich machen, bevor Alfimas
+                 verzögerte zweite Navigation ausgeführt wird.
+                 Wir setzen src auf about:blank (Iframe-Kontext wird zerstört,
+                 alle laufenden Timer/Callbacks gecleart) und entfernen
+                 zusätzlich das Element aus dem DOM. */
+              if(iframe){
+                try {
+                  iframe.src = "about:blank";
+                  log("→ Iframe auf about:blank umgeleitet.");
+                  setTimeout(function(){
+                    if(iframe && iframe.parentNode){
+                      iframe.parentNode.removeChild(iframe);
+                      log("→ Iframe aus DOM entfernt.");
+                    }
+                  }, 0);
+                } catch(err){
+                  warn("Konnte Iframe nicht entladen:", err);
+                }
+              }
 
               if(typeof window.revealResultAfterOptin === "function"){
                 log("→ Ergebnis wird enthüllt.");
