@@ -783,15 +783,16 @@
   .teaser .more b{color:var(--ink);font-weight:600}
 
   .mailnote{
-    background:var(--cream-deep);
-    border:1px dashed var(--warm);
-    border-radius:var(--radius);
-    padding:22px 24px;
-    margin-top:22px;
-    font-size:.96rem;
+    background:var(--sage-bg);
+    border:1.5px solid var(--sage-deep);
+    border-radius:var(--radius-lg);
+    padding:26px 28px;
+    margin-top:28px;
+    font-size:1rem;
     text-align:center;
-    color:var(--ink-soft);
-    line-height:1.55;
+    color:var(--ink);
+    line-height:1.6;
+    box-shadow:var(--shadow-sm);
   }
   .mailnote b{color:var(--ink);font-weight:600}
 
@@ -982,7 +983,40 @@
 
       <div id="optin-form" class="formembed">
         <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
-        <script>(function(){var u=new URL("https://alfima.com/nellikla/leads/Entzuendungstest/embed");var allowedOrigin=u.origin;var iframe=document.currentScript&&document.currentScript.previousElementSibling;window.addEventListener("message",function(e){if(e.origin!==allowedOrigin)return;if(!e.data||typeof e.data.type!=="string")return;if(e.data.type==="alfima-embed-resize"){if(iframe&&iframe.tagName==="IFRAME")iframe.style.height=e.data.height+"px";}else if(e.data.type==="alfima-embed-redirect"){var url=e.data.url;if(typeof url==="string"&&/^https?:\/\//.test(url)){window.top.location.href=url;}}});})();</script>
+        <script>
+        (function(){
+          /* Erweitertes Alfima-Handling:
+             - Original: Iframe-Resize + Redirect zur Alfima-Danke-Seite
+             - Angepasst: Redirect wird ABGEFANGEN → stattdessen decken wir
+               das Ergebnis auf der eigenen Seite auf. Der User bleibt hier,
+               Alfima triggert im Hintergrund seine Automation weiter. */
+          var host = "alfima.com";
+          var iframe = document.currentScript && document.currentScript.previousElementSibling;
+          var handled = false;
+
+          window.addEventListener("message", function(e){
+            try {
+              var origin = new URL(e.origin);
+              if(origin.hostname !== host && !origin.hostname.endsWith("." + host)) return;
+            } catch(err) { return; }
+            if(!e.data || typeof e.data.type !== "string") return;
+
+            if(e.data.type === "alfima-embed-resize"){
+              if(iframe && iframe.tagName === "IFRAME") iframe.style.height = e.data.height + "px";
+            }
+            else if(e.data.type === "alfima-embed-redirect" && !handled){
+              handled = true;
+              /* Redirect NICHT ausführen — stattdessen Ergebnis inline anzeigen. */
+              if(typeof window.revealResultAfterOptin === "function"){
+                window.revealResultAfterOptin(e.data.url || "");
+              } else if(typeof e.data.url === "string" && /^https?:\/\//.test(e.data.url)){
+                /* Fallback, falls unser Callback nicht existiert: doch redirecten. */
+                window.top.location.href = e.data.url;
+              }
+            }
+          });
+        })();
+        </script>
       </div>
     </section>
 
@@ -1003,7 +1037,25 @@
 const CONFIG = {
   PRIVACY_URL: "https://www.naturgesund-nelliklameth.de/datenschutz",
   IMPRINT_URL: "https://www.naturgesund-nelliklameth.de/impressum",
-  BOOK_URL:    "https://shop.autorenwelt.de/products/die-naturapothekerin-fur-stille-entzundungen-von-nelli-klameth"
+  BOOK_URL:    "https://shop.autorenwelt.de/products/die-naturapothekerin-fur-stille-entzundungen-von-nelli-klameth",
+
+  /* Alfima-Formulare:
+     - FORM_URL_DEFAULT: das Grund-Formular (wird immer geladen, solange kein
+       bereichsspezifisches konfiguriert ist).
+     - FORM_URLS_BY_AREA: OPTIONAL — hier kannst du pro Schwerpunkt ein eigenes
+       Alfima-Formular hinterlegen (mit eigener Automation & bereichsspezifischer
+       Willkommensmail). Solange die Einträge auskommentiert bleiben, nutzt der
+       Test das Grund-Formular. Du kannst die Formulare stückweise in Alfima
+       anlegen und hier nach und nach freischalten. */
+  FORM_URL_DEFAULT: "https://alfima.com/nellikla/leads/Entzuendungstest/embed",
+  FORM_URLS_BY_AREA: {
+    // "bewegung":     "https://alfima.com/nellikla/leads/Entzuendungstest-Bewegung/embed",
+    // "darm":         "https://alfima.com/nellikla/leads/Entzuendungstest-Darm/embed",
+    // "nerven":       "https://alfima.com/nellikla/leads/Entzuendungstest-Nerven/embed",
+    // "immun":        "https://alfima.com/nellikla/leads/Entzuendungstest-Immun/embed",
+    // "stoffwechsel": "https://alfima.com/nellikla/leads/Entzuendungstest-Stoffwechsel/embed",
+    // "hormone":      "https://alfima.com/nellikla/leads/Entzuendungstest-Hormone/embed"
+  }
 };
 
 /* ─── Testinhalte: Original aus dem Buch ─── */
@@ -1278,30 +1330,38 @@ function radarSVG(sc, size, reveal){
 function finishQuiz(){
   $("locked-preview").innerHTML = "<div class='chartcard'><div class='cap'>Dein Entzündungs-Kompass</div>"+radarSVG(scores(), 480, false)+"</div>";
 
-  /* Ergebnisse an Alfima-Iframe übergeben (als URL-Parameter),
-     damit die passende Heilpflanzen-Mail zum Schwerpunkt versendet werden kann. */
+  /* Bereichsspezifisches Alfima-Formular laden, falls konfiguriert.
+     Sonst bleibt es beim Default-Formular. */
   const t = topArea();
-  const sc = scores();
-  const params = new URLSearchParams();
-  params.set("topAreaId",    t.id);
-  params.set("topAreaName",  t.name);
-  params.set("topAreaLevel", levelFor(t.pts).label);
-  params.set("topAreaPts",   t.pts);
-  sc.forEach(s => params.set("score_"+s.id, s.pts));
-
   const iframe = document.querySelector("#optin-form iframe");
   if(iframe){
-    const baseUrl = "https://alfima.com/nellikla/leads/Entzuendungstest/embed";
-    iframe.src = baseUrl + "?" + params.toString();
+    const areaUrl = CONFIG.FORM_URLS_BY_AREA && CONFIG.FORM_URLS_BY_AREA[t.id];
+    const targetUrl = areaUrl || CONFIG.FORM_URL_DEFAULT;
+    /* Nur neu laden, wenn sich die URL ändert (spart einen Reload beim Default). */
+    if(iframe.src.indexOf(targetUrl) === -1){
+      iframe.src = targetUrl;
+    }
   }
 
   show("s-gate");
 }
 
-/* ─── Ergebnis-Screen (renderResult) bleibt im Code erhalten für spätere Integration:
-   wird derzeit nicht automatisch aufgerufen, da Alfima die Weiterleitung/Auslieferung übernimmt.
-   Falls du später wieder eine On-Page-Auswertung willst, kann renderResult(name) über einen
-   postMessage-Handler von Alfima getriggert werden. ─── */
+/* ─── Reveal-Callback für Alfima-Integration ───
+   Wird vom Alfima-Handler aufgerufen, wenn das Formular erfolgreich
+   abgesendet wurde (statt Alfima's Standard-Redirect). Deckt das
+   Ergebnis auf der Seite auf. */
+window.revealResultAfterOptin = function(redirectUrl){
+  /* Versuche Namen aus Redirect-URL zu parsen (falls Nelli in Alfima
+     die Redirect-URL mit ?firstname={{firstname}} konfiguriert hat). */
+  var name = "";
+  try {
+    var u = new URL(redirectUrl);
+    name = u.searchParams.get("firstname") ||
+           u.searchParams.get("vorname")   ||
+           u.searchParams.get("name")      || "";
+  } catch(e) { /* ignore */ }
+  renderResult(name);
+};
 
 /* ─── Ergebnis-Screen ─── */
 function renderResult(name){
@@ -1310,14 +1370,22 @@ function renderResult(name){
   const lvl = levelFor(t.pts);
   const area = AREAS.find(a=>a.id===t.id);
   const sorted = sc.slice().sort((x,y)=>y.pts-x.pts);
-  const hello = name ? name+", dein" : "Dein";
+  const hello = name ? "Danke, " + name + "!" : "Danke dir!";
 
   $("s-result").innerHTML = `
     <div class="result-head">
       <div class="rlabel">Deine Auswertung</div>
-      <h2>${hello} Schwerpunkt liegt<br>im Bereich <em>${area.roman} · ${area.name}</em></h2>
+      <h2>${hello}<br>Dein Schwerpunkt liegt<br>im Bereich <em>${area.roman} · ${area.name}</em></h2>
       <p class="rmeta">Signalstärke in diesem Bereich: <b>${lvl.label}</b> · ${t.pts} von 40 Punkten</p>
     </div>
+
+    <div class="mailnote">
+      <b>📬 Bitte checke jetzt dein Postfach:</b><br>
+      Wir haben dir eine Bestätigungsmail geschickt (Double-Opt-in). Sobald du bestätigst, bekommst du deine <b>ausführlichen Heilpflanzen-Empfehlungen und Rezepturen für den Bereich ${area.name}</b> per Mail — plus meine wöchentliche Post mit fundiertem Heilpflanzenwissen.<br>
+      <span style="font-size:.85rem;color:var(--muted);font-style:italic;">Keine Mail bekommen? Wirf einen Blick in den Spam-Ordner.</span>
+    </div>
+
+    <p style="text-align:center;font-family:var(--serif);font-style:italic;font-size:1.1rem;color:var(--ink-soft);margin-top:32px;">Solange schon eine erste Vorschau für dich:</p>
 
     <div class="chartcard">
       <div class="cap">Dein Entzündungs-Kompass</div>
@@ -1344,11 +1412,7 @@ function renderResult(name){
       <h3>${area.plant.name}</h3>
       <p class="quote">${area.plant.quote}</p>
       <p>${area.plant.text}</p>
-      <p class="more"><b>Das ist erst der Anfang:</b> Deine vollständigen Heilpflanzen-Empfehlungen für den Bereich ${area.name} — mit Anwendung und meinen Rezepturen — sind bereits auf dem Weg in dein Postfach. 📬</p>
-    </div>
-
-    <div class="mailnote">
-      <b>Schau in dein Postfach:</b> Bitte bestätige kurz deine Anmeldung (Double-Opt-in) — direkt danach bekommst du deinen Kompass &amp; deine Heilpflanzen-Empfehlungen. Keine Mail? Wirf einen Blick in den Spam-Ordner.
+      <p class="more"><b>Das ist erst der Anfang:</b> Sobald du deine Anmeldung bestätigt hast, bekommst du meine vollständigen Heilpflanzen-Empfehlungen für den Bereich ${area.name} — mit Anwendung, Dosierung und meinen Rezepturen.</p>
     </div>
 
     <div class="bookmention">
