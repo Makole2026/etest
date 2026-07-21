@@ -982,7 +982,10 @@
       </div>
 
       <div id="optin-form" class="formembed">
-        <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
+        <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                style="width:100%;border:none;min-height:400px;"
+                title="Lead Form"></iframe>
         <script>
         (function(){
           /* ═══════════════════════════════════════════════════════════
@@ -996,7 +999,9 @@
           var handled = false;
 
           function log(prefix, msg){
-            if(DEBUG) console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600", msg);
+            if(!DEBUG) return;
+            if(msg === undefined) console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600");
+            else                  console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600", msg);
           }
           function warn(prefix, msg){
             console.warn("%c[Alfima] "+prefix, "color:#8C4A3C;font-weight:600", msg);
