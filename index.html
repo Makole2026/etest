@@ -985,98 +985,20 @@
         <iframe src="https://alfima.com/nellikla/leads/Entzuendungstest/embed" style="width:100%;border:none;min-height:400px;" title="Lead Form"></iframe>
         <script>
         (function(){
-          /* ═══════════════════════════════════════════════════════════
-             ALFIMA-HANDLER MIT DEBUG-MODUS
-             Zum Diagnostizieren: alle Nachrichten werden in die Browser-
-             Konsole geloggt. Nach erfolgreichem Test DEBUG auf false setzen.
-             ═══════════════════════════════════════════════════════════ */
-          var DEBUG = true;
+          /* Nur noch fürs automatische Höhenanpassen des eingebetteten
+             Formulars zuständig. Das Ergebnis-Reveal läuft NICHT mehr über
+             das Abfangen von Alfimas Redirect (siehe Erklärung bei CONFIG
+             weiter unten) — deshalb kein Redirect-Handling mehr hier. */
           var host = "alfima.com";
           var iframe = document.currentScript && document.currentScript.previousElementSibling;
-          var handled = false;
-
-          function log(prefix, msg){
-            if(!DEBUG) return;
-            if(msg === undefined) console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600");
-            else                  console.log("%c[Alfima] "+prefix, "color:#6B8570;font-weight:600", msg);
-          }
-          function warn(prefix, msg){
-            console.warn("%c[Alfima] "+prefix, "color:#8C4A3C;font-weight:600", msg);
-          }
-
-          log("Handler initialisiert. Iframe:", iframe && iframe.src);
-          log("revealResultAfterOptin verfügbar:", typeof window.revealResultAfterOptin);
-
           window.addEventListener("message", function(e){
-            /* JEDE Nachricht wird geloggt — nur so sehen wir, was Alfima sendet. */
-            log("Nachricht empfangen von "+e.origin+":", e.data);
-
-            /* Origin-Prüfung */
-            var isFromAlfima = false;
             try {
               var origin = new URL(e.origin);
-              isFromAlfima = origin.hostname === host || origin.hostname.endsWith("." + host);
-            } catch(err) {}
-
-            if(!isFromAlfima){
-              log("→ Ignoriert (Origin nicht alfima.com)", e.origin);
-              return;
+              if(origin.hostname !== host && !origin.hostname.endsWith("." + host)) return;
+            } catch(err){ return; }
+            if(e.data && e.data.type === "alfima-embed-resize" && iframe && iframe.tagName === "IFRAME"){
+              iframe.style.height = e.data.height + "px";
             }
-
-            if(!e.data || typeof e.data.type !== "string"){
-              log("→ Ignoriert (kein type-Feld)", e.data);
-              return;
-            }
-
-            var type = e.data.type;
-
-            /* Resize-Nachrichten: Iframe-Höhe anpassen, still weiterlaufen */
-            if(type === "alfima-embed-resize"){
-              if(iframe && iframe.tagName === "IFRAME") iframe.style.height = e.data.height + "px";
-              return;
-            }
-
-            /* Redirect / Submit-Success ABFANGEN.
-               Großzügige Erkennung: nicht nur "alfima-embed-redirect",
-               sondern jeder Typ, der auf einen erfolgreichen Submit hinweist. */
-            var isRedirectLike = /redirect|submit|success|complete|thank|done|finish/i.test(type);
-            if(isRedirectLike && !handled){
-              handled = true;
-              log("→ REDIRECT/SUBMIT ABGEFANGEN. Type: "+type, e.data);
-
-              /* KRITISCH: Iframe SOFORT unschädlich machen, bevor Alfimas
-                 verzögerte zweite Navigation ausgeführt wird.
-                 Wir setzen src auf about:blank (Iframe-Kontext wird zerstört,
-                 alle laufenden Timer/Callbacks gecleart) und entfernen
-                 zusätzlich das Element aus dem DOM. */
-              if(iframe){
-                try {
-                  iframe.src = "about:blank";
-                  log("→ Iframe auf about:blank umgeleitet.");
-                  setTimeout(function(){
-                    if(iframe && iframe.parentNode){
-                      iframe.parentNode.removeChild(iframe);
-                      log("→ Iframe aus DOM entfernt.");
-                    }
-                  }, 0);
-                } catch(err){
-                  warn("Konnte Iframe nicht entladen:", err);
-                }
-              }
-
-              if(typeof window.revealResultAfterOptin === "function"){
-                log("→ Ergebnis wird enthüllt.");
-                window.revealResultAfterOptin(e.data.url || "");
-              } else {
-                warn("revealResultAfterOptin() nicht gefunden!", "Fallback: Redirect ausführen.");
-                if(typeof e.data.url === "string" && /^https?:\/\//.test(e.data.url)){
-                  window.top.location.href = e.data.url;
-                }
-              }
-              return;
-            }
-
-            log("→ Nichts zu tun mit type: "+type);
           });
         })();
         </script>
@@ -1118,7 +1040,34 @@ const CONFIG = {
     // "immun":        "https://alfima.com/nellikla/leads/Entzuendungstest-Immun/embed",
     // "stoffwechsel": "https://alfima.com/nellikla/leads/Entzuendungstest-Stoffwechsel/embed",
     // "hormone":      "https://alfima.com/nellikla/leads/Entzuendungstest-Hormone/embed"
-  }
+  },
+
+  /* ═══════════════════════════════════════════════════════════════
+     ERGEBNIS-WIEDERHERSTELLUNG NACH ALFIMA-REDIRECT
+     ═══════════════════════════════════════════════════════════════
+     Alfima leitet nach dem Absenden IMMER die komplette Seite weiter
+     (nicht nur den iFrame) — das lässt sich von außen nicht zuverlässig
+     abfangen, da Alfima die Weiterleitung synchron auslöst. Statt dagegen
+     anzukämpfen, nutzen wir es: Kurz bevor der Nutzer das Formular sieht,
+     speichern wir sein Testergebnis im localStorage seines Browsers.
+     localStorage übersteht einen Redirect auf DIESELBE Domain problemlos.
+     Die Redirect-Ziel-URL in Alfima zeigt einfach wieder hierher, mit
+     einem Erkennungsmerkmal in der URL — das Script liest dann das
+     Ergebnis aus dem Speicher und zeigt es sofort an.
+
+     BITTE IN ALFIMA EINTRAGEN (Formular → Weiterleiten/Redirect zu URL):
+       https://etest.naturgesund-nelliklameth.de/?ergebnis=1&vorname={{firstname}}
+
+     Falls Alfima {{firstname}} als Platzhalter für den Vornamen anders
+     nennt (z. B. {{first_name}} oder {{name}}) — einfach in der Alfima-
+     Vorschau/Doku nachsehen und anpassen. Falls Alfima gar keinen
+     Platzhalter im Redirect-Feld erlaubt: einfach nur
+       https://etest.naturgesund-nelliklameth.de/?ergebnis=1
+     eintragen — der Kompass wird dann ohne Namens-Anrede angezeigt,
+     alles andere funktioniert genauso. */
+  RESULT_STORAGE_KEY: "entzuendungstest_ergebnis_v1",
+  RESULT_QUERY_PARAM: "ergebnis",          // Redirect-URL braucht ?ergebnis=1
+  RESULT_MAX_AGE_MS: 3 * 60 * 60 * 1000    // 3 Stunden Gültigkeit des zwischengespeicherten Ergebnisses
 };
 
 /* ─── Testinhalte: Original aus dem Buch ─── */
@@ -1363,7 +1312,8 @@ function prev(){
 
 /* ─── Auswertung ─── */
 function scores(){ return AREAS.map((a,i)=>({ id:a.id, name:a.name, roman:a.roman, pts: answers[i].reduce((s,v)=>s+(v||0),0) })); }
-function topArea(){ return scores().slice().sort((x,y)=>y.pts-x.pts)[0]; }
+function topAreaFrom(sc){ return sc.slice().sort((x,y)=>y.pts-x.pts)[0]; }
+function topArea(){ return topAreaFrom(scores()); }
 function levelFor(pts){ return LEVELS.find(l=>pts>=l.min && pts<=l.max) || LEVELS[0]; }
 
 function radarSVG(sc, size, reveal){
@@ -1391,11 +1341,22 @@ function radarSVG(sc, size, reveal){
 }
 
 function finishQuiz(){
-  $("locked-preview").innerHTML = "<div class='chartcard'><div class='cap'>Dein Entzündungs-Kompass</div>"+radarSVG(scores(), 480, false)+"</div>";
+  const sc = scores();
+
+  /* Ergebnis JETZT zwischenspeichern — bevor der Nutzer das Alfima-
+     Formular überhaupt sieht. So ist es da, egal wann/wie Alfima
+     nachher die Seite neu lädt. */
+  try {
+    localStorage.setItem(CONFIG.RESULT_STORAGE_KEY, JSON.stringify({ sc: sc, ts: Date.now() }));
+  } catch(e) {
+    console.warn("Konnte Ergebnis nicht zwischenspeichern (localStorage nicht verfügbar):", e);
+  }
+
+  $("locked-preview").innerHTML = "<div class='chartcard'><div class='cap'>Dein Entzündungs-Kompass</div>"+radarSVG(sc, 480, false)+"</div>";
 
   /* Bereichsspezifisches Alfima-Formular laden, falls konfiguriert.
      Sonst bleibt es beim Default-Formular. */
-  const t = topArea();
+  const t = topAreaFrom(sc);
   const iframe = document.querySelector("#optin-form iframe");
   if(iframe){
     const areaUrl = CONFIG.FORM_URLS_BY_AREA && CONFIG.FORM_URLS_BY_AREA[t.id];
@@ -1409,27 +1370,55 @@ function finishQuiz(){
   show("s-gate");
 }
 
-/* ─── Reveal-Callback für Alfima-Integration ───
-   Wird vom Alfima-Handler aufgerufen, wenn das Formular erfolgreich
-   abgesendet wurde (statt Alfima's Standard-Redirect). Deckt das
-   Ergebnis auf der Seite auf. */
-window.revealResultAfterOptin = function(redirectUrl){
-  /* Versuche Namen aus Redirect-URL zu parsen (falls Nelli in Alfima
-     die Redirect-URL mit ?firstname={{firstname}} konfiguriert hat). */
-  var name = "";
-  try {
-    var u = new URL(redirectUrl);
-    name = u.searchParams.get("firstname") ||
-           u.searchParams.get("vorname")   ||
-           u.searchParams.get("name")      || "";
-  } catch(e) { /* ignore */ }
-  renderResult(name);
-};
+/* ─── Ergebnis nach Alfima-Redirect wiederherstellen ───
+   Läuft beim Seitenaufruf. Erkennt am URL-Parameter (siehe CONFIG),
+   dass wir gerade aus Alfimas Redirect zurückkommen, liest das vorher
+   gespeicherte Ergebnis aus localStorage und zeigt es direkt an —
+   ganz ohne iFrame-Abfangen oder Wettlauf mit Alfimas Navigation. */
+function tryRestoreResultFromRedirect(){
+  const params = new URLSearchParams(location.search);
+  const isPostOptin = params.get(CONFIG.RESULT_QUERY_PARAM) === "1" || location.hash === "#ergebnis";
+  if(!isPostOptin) return false;
+
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(CONFIG.RESULT_STORAGE_KEY) || "null"); }
+  catch(e) { saved = null; }
+
+  const isFresh = saved && saved.sc && (Date.now() - (saved.ts||0)) <= CONFIG.RESULT_MAX_AGE_MS;
+
+  /* URL wieder aufräumen, damit ein Neuladen/Teilen nicht verwirrt. */
+  try { history.replaceState(null, "", location.pathname); } catch(e) {}
+
+  if(!isFresh){
+    renderResultNotFound();
+    return true;
+  }
+
+  const name = params.get("vorname") || params.get("firstname") || params.get("name") || "";
+  renderResult(name, saved.sc);
+  return true;
+}
+
+/* ─── Fallback: Ergebnis-Merkmal in URL, aber kein (gültiges) gespeichertes
+   Ergebnis gefunden (z. B. Browser-Daten gelöscht, sehr alter Link). ─── */
+function renderResultNotFound(){
+  $("s-result").innerHTML = `
+    <div class="result-head">
+      <div class="rlabel">Hinweis</div>
+      <h2>Deine Auswertung konnte<br>nicht gefunden werden.</h2>
+      <p class="rmeta">Das kann passieren, wenn zwischen Test und Anmeldung zu viel Zeit vergangen ist oder Browserdaten gelöscht wurden.</p>
+    </div>
+    <p style="text-align:center;margin-top:32px">
+      <button class="btn-primary" id="btn-restart">Test erneut starten →</button>
+    </p>`;
+  show("s-result");
+  $("btn-restart").onclick = ()=>{ show("s-intro"); };
+}
 
 /* ─── Ergebnis-Screen ─── */
-function renderResult(name){
-  const sc = scores();
-  const t  = topArea();
+function renderResult(name, scOverride){
+  const sc = scOverride || scores();
+  const t  = topAreaFrom(sc);
   const lvl = levelFor(t.pts);
   const area = AREAS.find(a=>a.id===t.id);
   const sorted = sc.slice().sort((x,y)=>y.pts-x.pts);
@@ -1505,8 +1494,9 @@ $("btn-start-2").onclick = startTest;
 $("privacy-link-2").href = CONFIG.PRIVACY_URL;
 $("imprint-link").href = CONFIG.IMPRINT_URL;
 
-/* Debug-Bestätigung: wenn du "OK" in der Konsole siehst, ist alles bereit. */
-console.log("%c[Test] Haupt-Script geladen. revealResultAfterOptin bereit: "+(typeof window.revealResultAfterOptin === "function" ? "OK ✓" : "FEHLT ✗"), "color:#6B8570;font-weight:600");
+/* Kommen wir gerade von Alfimas Redirect zurück? Dann Ergebnis sofort
+   zeigen — sonst ganz normal mit der Startseite weitermachen. */
+tryRestoreResultFromRedirect();
 </script>
 </body>
 </html>
